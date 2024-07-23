@@ -1,0 +1,74 @@
+// backend/db/queries/getPosts.js
+const db = require('../config');
+
+//Create the create post api...
+app.post('/api/createpost', (req, res) => {
+    const {title, author, content} =req.body;
+    const query = 'INSERT INTO posts (title, author, content) VALUES (?, ?, ?)';
+    db.query(query, [title, author, content], (err, results) => {
+         if(err){
+             console.error(err);
+             res.status(500).send('Server Error...');
+         } else {
+             res.status(200).send('Post Created Successfully.');
+         }
+     });
+ });
+
+//Get blog posts API....
+app.get('/api/posts', (req, res) => {
+    db.query('SELECT * FROM posts ORDER BY id DESC', (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        } else {
+            res.json(results);
+        }
+    });
+});
+
+// Select specific post by post ID...
+app.get('/api/posts/:id', (req, res) => {
+    const postId = req.params.id;
+    db.query('SELECT * FROM posts WHERE id = ?', [postId], (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        } else if (results.length === 0) {
+            res.status(404).send({ message: 'Post not found' });
+        } else {
+            res.json(results[0]);
+        }
+    });
+});
+
+// PUT endpoint to update a specific post
+app.put('/api/posts/:id', (req, res) => {
+    const postId = req.params.id;
+    const { title, content, author } = req.body;
+
+    const query = 'UPDATE posts SET title = ?, content = ?, author = ? WHERE id = ?';
+    const values = [title, content, author, postId];
+
+    db.query(query, values, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        } else if (results.affectedRows === 0) {
+            res.status(404).send({ message: 'Post not found' });
+        } else {
+            res.status(200).send({ message: 'Post updated successfully' });
+        }
+    });
+});
+
+//Delete post record....
+app.delete('/api/posts/:id', (req, res) => {
+    const postId = req.params.id;
+    db.query('DELETE FROM posts WHERE id = ?', [postId], (err, results) => {
+        if(err) {
+            res.status(500).send(err);
+        } else if (results.affectedRows === 0){
+            res.status(400).send({ message: 'Post not Found.'});
+        } else {
+            res.status(200).send({ message: 'Post deleted successfully'});
+        }
+    })
+});
